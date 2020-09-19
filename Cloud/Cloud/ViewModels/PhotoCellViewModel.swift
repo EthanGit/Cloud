@@ -7,24 +7,30 @@
 //
 
 import Foundation
+import UIKit
 
 class PhotoCellViewModel {
-    private let photo: Photo
+    var id: String
+    var title: String
+    var imageUrlStr: String
     
-    init(photo: Photo) {
-        self.photo = photo
+    private let downloadImageQueue = OperationQueue()
+    var onImageDownloaded: ((UIImage?) -> Void)?
+    let imageCache = NSCache<NSURL, UIImage>()
+
+    init(id: String, title: String, imageUrl: String?) {
+        self.id = id
+        self.title = title
+        self.imageUrlStr = imageUrl ?? ""
     }
-    
-    var id: String {
-        return String(photo.id)
+
+    func getImage() {
+        guard let url = URL(string: imageUrlStr) else { return }
+        downloadImageQueue.addOperation { [weak self] in
+            ApiManager.shared.fetchImage(url: url) { (image) in
+            guard let imageDownloaded = self?.onImageDownloaded else { return }
+                imageDownloaded(image)
+            }
+        }
     }
-    
-    var title: String {
-        return photo.title
-    }
-    
-    var coverImageUrl: URL {
-        return URL(string: photo.thumbnailURL!)!
-    }
-    
 }

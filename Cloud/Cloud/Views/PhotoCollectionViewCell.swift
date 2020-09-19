@@ -13,20 +13,27 @@ class PhotoCollectionViewCell: UICollectionViewCell {
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var idLabel: UILabel!
     @IBOutlet weak var titleLabel: UILabel!
+    
+    private var viewModel: PhotoCellViewModel?
 
-    func configure(_ viewModel: PhotoCellViewModel?) {
+    override func prepareForReuse() {
+        super.prepareForReuse()
         imageView.image = nil
-        guard let photoViewModel = viewModel else { return }
-        idLabel.text = photoViewModel.id
-        titleLabel.text = photoViewModel.title
+        self.viewModel?.onImageDownloaded = nil
+    }
+    
+    func configure(_ viewModel: PhotoCellViewModel?) {
+        self.viewModel = viewModel
         
-        ApiManager.shared.fetchImage(url: photoViewModel.coverImageUrl) { [weak self] (image) in
-            guard let self = self else { return }
+        idLabel.text = viewModel?.id
+        titleLabel.text = viewModel?.title
+      
+        self.viewModel?.onImageDownloaded = { [weak self] image in
             DispatchQueue.main.async {
-                self.imageView.image = image
+                self?.imageView.image = image
             }
         }
-        
+        self.viewModel?.getImage()
     }
     
     

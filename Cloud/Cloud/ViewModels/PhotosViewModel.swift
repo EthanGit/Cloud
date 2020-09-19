@@ -27,6 +27,7 @@ class PhotosViewModel {
         guard index < photos.endIndex else {
             return nil
         }
-        return PhotoCellViewModel(photo: photos[index])
+        let photo = photos[index]
+        return PhotoCellViewModel(id: String(photo.id), title: photo.title, imageUrl: photo.thumbnailURL)
     }
 }
