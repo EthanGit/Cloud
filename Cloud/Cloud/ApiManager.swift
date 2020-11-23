@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Combine
 
 final class ApiManager {
 
@@ -15,19 +16,33 @@ final class ApiManager {
 
     private let baseUrl: String = "https://jsonplaceholder.typicode.com"
     
+    var cancellableSet: Set<AnyCancellable> = []
+    
     func getPhotos(_ completionHandler: @escaping([Photo]) -> ()) {
-        URLSession.shared.dataTask(with: URL(string: self.baseUrl + "/photos")!) { data, response, error in
-            if let data = data {
-                do {
-                    let res = try JSONDecoder().decode(Photos.self, from: data)
-                    print(res)
-                    completionHandler(res)
-                } catch let error {
-                    print(error)
-                }
+        URLSession.shared.dataTaskPublisher(for: URL(string: self.baseUrl + "/photos")!)
+            .map(\.data)
+            .decode(type: Photos.self, decoder: JSONDecoder())
+            .sink { error in
+                print(error)
+            } receiveValue: { res in
+                completionHandler(res)
             }
-        }.resume()
+            .store(in: &cancellableSet)
     }
+
+//    func getPhotos(_ completionHandler: @escaping([Photo]) -> ()) {
+//        URLSession.shared.dataTask(with: URL(string: self.baseUrl + "/photos")!) { data, response, error in
+//            if let data = data {
+//                do {
+//                    let res = try JSONDecoder().decode(Photos.self, from: data)
+//                    print(res)
+//                    completionHandler(res)
+//                } catch let error {
+//                    print(error)
+//                }
+//            }
+//        }.resume()
+//    }
     
     func fetchImage(url: URL, completionHandler: @escaping (UIImage?) -> ()) {
         if let image = imageCache.object(forKey: url as NSURL) {
